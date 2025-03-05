@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from encodings.aliases import aliases
 from dotenv import load_dotenv
@@ -53,7 +54,7 @@ class FuzzyBot(commands.Bot):
         print(f'나후가 준비 완료했어요! {self.user}로 로그인했답니다~')
 
 # 봇 객체 생성
-bot = FuzzyBot(command_prefix='!', intents=intents)
+bot = FuzzyBot(command_prefix='?', intents=intents)
 
 # YouTube download options
 ytdl_format_options = {
@@ -446,7 +447,7 @@ class Music(commands.Cog):
         await asyncio.sleep(3)
         await ctx.message.delete()
 
-    @commands.command(name='!종료',aliases=['!!종료'])
+    @commands.command(name='종료',aliases=['종료'])
     async def stop(self, ctx):
         """음악 재생을 종료하고 봇을 음성 채널에서 내보냅니다."""
         player = self.get_player(ctx)
@@ -454,13 +455,13 @@ class Music(commands.Cog):
         await ctx.send("선생님, 나후가 음악 재생을 종료하고 음성 채널에서 나갔어요~ 다음에 또 불러주세요!", delete_after=10)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!나가',aliases=['!!나가'])
+    @commands.command(name='나가!',aliases=['나가'])
     async def leave(self, ctx):
         """봇을 음성 채널에서 내보냅니다."""
         await self.stop(ctx)  # stop 명령어를 재사용
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!대기열.',aliases=['!큐', '!대기열'])
+    @commands.command(name='대기열.',aliases=['큐', '대기열'])
     async def queue(self, ctx):
         """현재 재생 목록을 표시합니다."""
         player = self.get_player(ctx)
@@ -475,7 +476,7 @@ class Music(commands.Cog):
         await ctx.send(embed=embed, delete_after=10)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!볼륨.',aliases=['!볼륨', "!qhffba"])
+    @commands.command(name='볼륨.',aliases=['볼륨', "qhffba"])
     async def volume(self, ctx, volume: int):
         """볼륨을 설정합니다. (0-100)"""
         if ctx.voice_client is None:
@@ -492,7 +493,7 @@ class Music(commands.Cog):
             await ctx.send("앗, 볼륨은 0에서 100 사이로 해주세요~ 나후의 귀가 아파요!", delete_after=10)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!플레이리스트.',aliases=['!플레이리스트목록', '!플레이리스트', '!vmffpdlfltmxm'])
+    @commands.command(name='플레이리스트.',aliases=['플레이리스트목록', '플레이리스트', 'vmffpdlfltmxm'])
     async def 플레이리스트(self, ctx):
         """선생님의 플레이리스트 목록을 보여드려요."""
         user_id = str(ctx.author.id)
@@ -549,7 +550,7 @@ class Music(commands.Cog):
         await ctx.send("선생님의 플레이리스트 목록이에요:", view=view, delete_after=60)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!플레이리스트추가', aliases=['!프래이리스트추가', '!vmffpdlfltmxmcnrk'])
+    @commands.command(name='플레이리스트추가', aliases=['프래이리스트추가', 'vmffpdlfltmxmcnrk'])
     async def 플레이리스트추가(self, ctx, name: str, *urls):
         """선생님의 플레이리스트에 새 플레이리스트를 추가하거나 기존 플레이리스트에 곡을 추가해요."""
         if not urls:
@@ -569,7 +570,7 @@ class Music(commands.Cog):
         await ctx.send(f"선생님의 '{name}' 플레이리스트에 {len(urls)}개의 곡을 추가했어요!", delete_after=10)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!플레이리스트재생', aliases=['!플래이리스트재생', '!vmffpdlfltmxmwotod'])
+    @commands.command(name='플레이리스트재생', aliases=['플래이리스트재생', 'vmffpdlfltmxmwotod'])
     async def 플레이리스트재생(self, ctx, name: str):
         """선생님이 선택한 플레이리스트를 재생해요."""
         user_id = str(ctx.author.id)
@@ -615,7 +616,7 @@ class Music(commands.Cog):
             await ctx.send("어머, 선생님? 숫자를 올바르게 입력해 주셔야 해요. 나후가 이해할 수 있게요!", delete_after=10)
         await self.delete_command_message(ctx)
 
-    @commands.command(name='!도움말', aliases=['!도움', '!help'])
+    @commands.command(name='도움말', aliases=['도움', 'help'])
     async def help_command(self, ctx):
         """모든 사용 가능한 명령어와 설명을 보여줍니다."""
         embed = discord.Embed(title="나후의 명령어 목록", description="사용 가능한 모든 명령어와 설명이에요!", color=0x3498db)
@@ -629,7 +630,7 @@ class Music(commands.Cog):
         await asyncio.sleep(30)
         await message.delete(delay=2)
 
-    @commands.command(name='!대기열.',aliases=['!큐', '!대기열'])
+    @commands.command(name='대기열.',aliases=['큐', '대기열'])
     async def queue(self, ctx):
         """현재 재생 목록을 표시합니다."""
         player = self.get_player(ctx)
@@ -672,7 +673,7 @@ class Music(commands.Cog):
         except Exception as e:
             print(f"delete_command_message 오류: {e}")
 
-    @commands.command(name='!재시작', aliases=['!restart'])
+    @commands.command(name='재시작', aliases=['restart'])
     @commands.has_permissions(administrator=True)  # 관리자 권한 필요
     async def restart(self, ctx):
         """프로그램을 재시작합니다."""
@@ -683,7 +684,7 @@ class Music(commands.Cog):
         """현재 프로그램을 재시작합니다."""
         os.execv(sys.executable, ['python'] + sys.argv)
 
-    @commands.command(name='!종료', aliases=['!exit'])
+    @commands.command(name='종료', aliases=['exit'])
     @commands.has_permissions(administrator=True)  # 관리자 권한 필요
     async def stop(self, ctx):
             """봇을 음성 채널에서 나가게 합니다."""
@@ -695,7 +696,7 @@ class Music(commands.Cog):
             else:
                 await ctx.send("음성 채널에 있지 않아요!", delete_after=10)
 
-    @commands.command(name='!플레이리스트삭제', aliases=['!플래이리스트삭제'])
+    @commands.command(name='플레이리스트삭제', aliases=['플래이리스트삭제'])
     async def 플레이리스트삭제(self, ctx):
         """선생님의 플레이리스트 목록을 보여주고 삭제할 수 있어요."""
         user_id = str(ctx.author.id)
@@ -734,7 +735,7 @@ class Music(commands.Cog):
 
         await ctx.send("선생님의 플레이리스트 목록이에요:", view=view, delete_after=60)
 
-    @commands.command(name='!플레이리스트노래삭제', aliases=['!플레레이리스트노래삭제'])
+    @commands.command(name='플레이리스트노래삭제', aliases=['플레레이리스트노래삭제'])
     async def 플레이리스트노래삭제(self, ctx):
         """선생님의 플레이리스트에서 특정 노래를 삭제해요."""
         user_id = str(ctx.author.id)
@@ -794,6 +795,80 @@ class Music(commands.Cog):
         playlist_view.add_item(playlist_select)
 
         await ctx.send("선생님의 플레이리스트 목록이에요:", view=playlist_view, delete_after=60)
+
+    @commands.command(name='재생', aliases=['play'])
+    async def play(self, ctx, *, url: str):
+        """유튜브 URL의 노래를 재생합니다."""
+        # URL 유효성 검사
+        url_pattern = re.compile(r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$')
+        if not url_pattern.match(url):
+            return await ctx.send("선생님, 유효한 유튜브 URL을 입력해주세요!", delete_after=10)
+
+        player = self.get_player(ctx)
+        if not player:
+            return await ctx.send("선생님, 음성 채널에 먼저 입장해주세요! 나후가 따라갈게요~", delete_after=10)
+
+        if not ctx.voice_client:
+            if ctx.author.voice:
+                await ctx.author.voice.channel.connect()
+            else:
+                return await ctx.send("선생님, 음성 채널에 먼저 입장해주세요! 나후가 어디로 가야 할지 모르겠어요~", delete_after=10)
+
+        # Check if the URL is a playlist
+        ydl_opts = {
+            'quiet': True,
+            'extract_flat': True,
+            'force_generic_extractor': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            if 'entries' in info_dict:
+                # URL is a playlist
+                entries = info_dict['entries'][:10]  # Get the first 10 entries
+                for entry in entries:
+                    await player.queue.put(entry['url'])
+                await ctx.send(f"선생님, 재생목록의 처음 10곡을 재생할게요!", delete_after=10)
+            else:
+                # URL is a single video
+                await player.queue.put(url)
+                await ctx.send(f"선생님, '{url}'의 노래를 재생할게요!", delete_after=10)
+
+        if not player.is_playing:
+            await player.play_next()
+
+        await self.delete_command_message(ctx)
+
+    @commands.command(name='검색', aliases=['search'])
+    async def search(self, ctx, *, query: str):
+        """유튜브에서 음악을 검색합니다."""
+        try:
+            ydl_opts = {
+                'quiet': True,
+                'default_search': 'ytsearch6',  # 상위 6개의 검색 결과만 가져옴
+                'format': 'bestaudio/best',
+                'noplaylist': True,
+                'geo_bypass': True,
+                'geo_bypass_country': 'KR',  # 한국에서의 검색 결과
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(query, download=False)
+                entries = info_dict['entries']
+
+            if not entries:
+                return await ctx.send("선생님, 검색 결과가 없어요. 다른 검색어를 시도해보세요.", delete_after=10)
+
+            # Create an embed message with the search results
+            embed = discord.Embed(title="검색 결과", description="재생할 노래를 선택하세요:")
+            for entry in entries:
+                duration = entry.get('duration', 0)
+                minutes, seconds = divmod(duration, 60)
+                duration_str = f"{minutes}분 {seconds}초"
+                embed.add_field(name=entry['title'], value=f"[링크]({entry['url']}) - {duration_str}", inline=False)
+
+            await ctx.send(embed=embed, delete_after=60)
+        except Exception as e:
+            await ctx.send(f"오류가 발생했어요: {str(e)}", delete_after=10)
+            print(f"오류: {e}")
 
 async def main():
     async with bot:
