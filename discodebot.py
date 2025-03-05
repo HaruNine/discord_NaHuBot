@@ -819,6 +819,10 @@ class Music(commands.Cog):
             'quiet': True,
             'extract_flat': True,
             'force_generic_extractor': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                }],
+            'ffmpeg_location': ffmpeg_path,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=False)
@@ -841,34 +845,72 @@ class Music(commands.Cog):
     @commands.command(name='검색', aliases=['search'])
     async def search(self, ctx, *, query: str):
         """유튜브에서 음악을 검색합니다."""
-        try:
-            ydl_opts = {
-                'quiet': True,
-                'default_search': 'ytsearch6',  # 상위 6개의 검색 결과만 가져옴
-                'format': 'bestaudio/best',
-                'noplaylist': True,
-                'geo_bypass': True,
-                'geo_bypass_country': 'KR',  # 한국에서의 검색 결과
-            }
+        # Send a message indicating that the search is in progress
+        search_message = await ctx.send("검색 중입니다. 잠시만 기다려주세요...")
+
+        ydl_opts = {
+            "format": "worst",
+            "downloader" :  "aria2c",
+            'quiet': True,
+            'default_search': 'ytsearch',  # 기본 검색 옵션
+            'noplaylist': True,
+            'geo_bypass': True,
+            'geo_bypass_country': 'KR',  # 한국에서의 검색 결과
+            'extract_flat': 'in_playlist',  # Extract only metadata for playlists
+            'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            }],
+            'ffmpeg_location': ffmpeg_path,
+            "verbose": True,
+        }
+
+        filtered_entries = []
+        page = 1
+
+        while len(filtered_entries) < 6:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(query, download=False)
-                entries = info_dict['entries']
+                info_dict = ydl.extract_info(f"ytsearch{page * 6}:음악 {query} 노래", download=False)
 
-            if not entries:
-                return await ctx.send("선생님, 검색 결과가 없어요. 다른 검색어를 시도해보세요.", delete_after=10)
+            # Check if 'entries' exists in the info_dict
+            if 'entries' not in info_dict or not info_dict['entries']:
+                break
 
-            # Create an embed message with the search results
-            embed = discord.Embed(title="검색 결과", description="재생할 노래를 선택하세요:")
-            for entry in entries:
-                duration = entry.get('duration', 0)
-                minutes, seconds = divmod(duration, 60)
-                duration_str = f"{minutes}분 {seconds}초"
-                embed.add_field(name=entry['title'], value=f"[링크]({entry['url']}) - {duration_str}", inline=False)
+            # Filter entries based on duration (1 minute to 10 minutes)
+            for entry in info_dict['entries']:
+                if 60 <= entry.get('duration', 0) <= 600:
+                    filtered_entries.append(entry)
+                    if len(filtered_entries) == 6:
+                        break
 
-            await ctx.send(embed=embed, delete_after=60)
-        except Exception as e:
-            await ctx.send(f"오류가 발생했어요: {str(e)}", delete_after=10)
-            print(f"오류: {e}")
+            page += 1
+
+        if not filtered_entries:
+            await search_message.delete()
+            return await ctx.send("선생님, 검색 결과가 없어요. 다른 검색어를 시도해보세요.", delete_after=10)
+
+        # Create an embed message with the search results
+        embed = discord.Embed(title="검색 결과", description="재생할 노래를 선택하세요:")
+        view = View()
+
+        for i, entry in enumerate(filtered_entries):
+            duration = entry.get('duration', 0)
+            minutes, seconds = divmod(duration, 60)
+            duration_str = f"{int(minutes)}분 {int(seconds)}초"
+            embed.add_field(name=f"{i+1}. {entry['title']}", value=f"[링크]({entry['url']}) - {duration_str}", inline=False)
+
+            # Add a button for each search result
+            button = Button(label=f"{i+1}번 재생", style=discord.ButtonStyle.primary)
+
+            async def button_callback(interaction, entry=entry):
+                await interaction.response.defer()  # 상호작용 지연
+                await self.play(ctx, url=entry['url'])
+
+            button.callback = button_callback
+            view.add_item(button)
+
+        await search_message.delete()
+        await ctx.send(embed=embed, view=view, delete_after=60)
+        await self.delete_command_message(ctx)
 
 async def main():
     async with bot:
