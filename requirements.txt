@@ -1,0 +1,8 @@
+python-dotenv
+discord.py
+yt-dlp
+async_timeout
+fuzzywuzzy
+aiohttp
+python-Levenshtein
+PyNaCl
