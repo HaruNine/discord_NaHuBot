@@ -1,0 +1,30 @@
+# 라즈베리파이용 경량 Python 이미지 사용 (ARM64 지원)
+FROM python:3.10-slim
+
+# 작업 디렉토리 설정
+WORKDIR /bot
+
+# 최신 패키지 설치 (FFmpeg 포함)
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libffi-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 최신 pip 설치
+RUN pip install --upgrade pip
+
+# 프로젝트 파일 복사
+COPY . /bot
+
+# Ensure discordbot.py exists
+RUN test -f /bot/discodebot.py
+
+# 최신 Python 패키지 설치
+RUN pip install --no-cache-dir -U -r requirements.txt
+
+# yt-dlp 최신 버전 설치
+RUN pip install --no-cache-dir -U yt-dlp
+
+# 환경 변수 파일 로드 및 봇 실행
+CMD ["python", "discodebot.py"]

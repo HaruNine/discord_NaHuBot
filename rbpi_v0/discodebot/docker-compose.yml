@@ -1,0 +1,18 @@
+services:
+  discordbot:
+    build: .  # 현재 디렉토리의 Dockerfile로 빌드
+    image: nahu-bot  # 빌드된 이미지에 태그 지정
+    container_name: discordbot
+    env_file:
+      - .env
+    environment:
+      - BOT_MODE=production
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    network_mode: host
+    volumes:
+      - ./:/bot  # 개발 중 코드 변경시 재빌드 없이 반영
