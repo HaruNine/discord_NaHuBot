@@ -1,0 +1,25 @@
+services:
+  nahubot:
+    build: .  # 현재 디렉토리의 Dockerfile로 빌드
+    image: nahubot:latest
+    container_name: nahubot
+    env_file:
+      - .env
+    environment:
+      - BOT_MODE=production
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    network_mode: host
+    volumes:
+      - ./:/app # 개발시 코드 변경 실시간 반영
+      - ./temp:/app/temp
+    working_dir: /app
+    command: ["python", "code/nahu.py"]
+    deploy:
+      resources:
+        limits:
+          memory: "3G"
